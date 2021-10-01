@@ -1,16 +1,12 @@
 from flask import Flask, request, redirect, jsonify
-#, send_from_directory, render_template, request
-#from jinja2 import Environment
-#from jinja2.loaders import FileSystemLoader
 from flask_sqlalchemy import SQLAlchemy
 import secrets
 import validators
 import os
 app = Flask(__name__)
 
-app.config['FLASK_HOST'] = 'https://s.hypr.ax'
+app.config['FLASK_HOST'] = 'https://'+domain
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-app.config['FLASK_ENV']='development'
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 authorization = os.environ.get('AUTHORIZATION')
 domain = os.environ.get('DOMAIN')
@@ -46,19 +42,12 @@ Disallow: *
 	"""
 	resp = app.response_class(response=text,status=200,mimetype="text/plain")
 	return resp
-@app.route("/shorten/<path:path>", methods=["POST"])
+@app.route("/shorten/<path:path>", methods=["POST"]) # Returns shortened URLs
 def static_dir(path):
-#	print(path)
-	#print(request.data)
-#	req_data = request.get_json()
-#	Auth = req_data['authorization']
-#	original = req_data['original']
-#	print(original)
+
 	if request.headers['Authorization'] != authorization:
 		return "401 Unauthorised", 401
-#	else:
-#		print("Authorised!")
-#	print(original)
+
 	target = secrets.token_urlsafe(5)
 	dbloc = SiteRedir.query.filter_by(target=target).first()
 	original = request.url.replace("http://"+domain+"/shorten/", "", 1)
@@ -74,15 +63,10 @@ def static_dir(path):
 	db.session.commit()
 	return "https://"+domain+"/"+str(target), 200
 
-@app.route("/<url>")
+@app.route("/<url>") #handles shortned links
 def urlSearch(url):
 	dbloc = SiteRedir.query.filter_by(target=url).first()
 	if dbloc is None:
 		return "404 Not Found", 404
 	else:
-#		return "<script>location.replace('"+str(dbloc.original)+"');</script>"
 		return redirect(dbloc.original, 302)
-
-#@app.route("/login")
-
-#@appr.route("/login/)
